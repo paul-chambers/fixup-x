@@ -49,13 +49,40 @@ static struct {
     } list;
 } global;
 
-#define kASCIItext          0x007793288a3d4940
-#define kCsource            0x000010c366926420
-#define kLongLines          0x88c4f3f4395ec30f
-#define kx86_64             0x000000042728a7ad
-#define kWithDebugInfo      0xae9062447a72f508
-#define kNotStripped        0xacb9afc024c117a4
-#define kDynamicallyLinked  0x277b2b4786b618f2
+
+#define kPosixShellScript       0x8c31cd705219c078
+#define kBashScript             0xf1ed5dcbda7290eb
+#define kASCIItextExecutable    0x37d5693b400b5e92
+#define kMakefile               0x9b30d0a1938941ed
+#define kM4MacroProcessor       0x047491e3fe91ab92
+
+#define kASCIItext              0x007793288a3d4940
+#define kUTF8text               0x14363e1b1decc94a
+
+#define kELF32LSBexecutable     0x0d378a936c98dd77
+#define kELF32LSBrelocatable    0x3c18c8e848a2b921
+#define kELF32LSBsharedObject   0x5cf99f6b75c5ab31
+#define kELF64LSBexecutable     0x2787caf6cff77570
+#define kELF64LSBrelocatable    0xa7939999f9863ff4
+#define kELF64LSBsharedObject   0xa706f2d2111e752c
+
+#define kIntel80386             0x16ae39e49542b30b
+#define kx86_64                 0x000000042728a7ad
+#define kARM                    0x000000000001e38c
+#define kARMaarch64             0x14144f04b8a53c29
+
+#define kGIFimageData           0x2865dca351520983
+#define kJPEGimageData          0x8778c2d6ef005bbf
+#define kPNGimageData           0x5d6522604bcab33e
+
+#define kAssemblerSource        0xa1f98a0f20fb2f03
+#define kCsource                0x000010c366926420
+
+#define kCRLFlineEndings        0xfbcb3a91b4eed651
+#define kLongLines              0x88c4f3f4395ec30f
+#define kWithDebugInfo          0xae9062447a72f508
+#define kNotStripped            0xacb9afc024c117a4
+#define kDynamicallyLinked      0x277b2b4786b618f2
 
 tStringHash hashString( const char * string )
 {
@@ -112,23 +139,34 @@ int incFileType(  const char * fpath, const char * description )
                 *d++ = *s++;
             }
 
+#if 0
             printf( "segment: \"" );
             fwrite( rewind, s - rewind, 1, stdout );
             printf( "\", hash: 0x%016lx\n", hash );
+#endif
 
             switch ( hash )
             {
+            case kIntel80386:
+//                printf( "i386\n" );
+                newType->executable = true;
+                newType->instructionSetArchitecture = i386;
+                printf("%s\n    %s\n", desc, fpath );
+                break;
+
+            case kx86_64:
+//                printf( "x86-64\n" );
+                newType->executable = true;
+                newType->instructionSetArchitecture = x86_64;
+//                printf("%s\n    %s\n", desc, fpath );
+                break;
+
+#if 0
             case kASCIItext: printf( "ASCII text\n" ); break;
             case kCsource:   printf( "C source\n" );   break;
             case kLongLines:
                 printf( "long lines\n" );
                 d = rewind;
-                break;
-
-            case kx86_64:
-                printf( "x86-64\n" );
-                newType->executable = true;
-                newType->instructionSetArchitecture = x86_64;
                 break;
 
             case kWithDebugInfo:
@@ -152,11 +190,12 @@ int incFileType(  const char * fpath, const char * description )
                 printf( "dynamically linked\n" );
                 break;
 
+#endif
             default:
                 if ( strncmp( "BuildID", rewind, 7 ) == 0 )
                 {
                     d = rewind;
-                    printf( "Build ID\n" );
+//                    printf( "Build ID\n" );
                 }
                 break;
             }
@@ -165,7 +204,7 @@ int incFileType(  const char * fpath, const char * description )
         *d = '\0';
 
         hash = hashString( desc );
-        printf( "type: %s, hash: 0x%016lx\n", desc, hash );
+//        printf( "type: %s, hash: 0x%016lx\n", desc, hash );
 
         tFileType * type;
         for ( type = global.list.fileTypes; type != NULL && found != true; type = type->next )
@@ -173,7 +212,7 @@ int incFileType(  const char * fpath, const char * description )
             if ( type->hash == hash )
             {
                 ++type->count;
-                printf( "exists: %s\n", type->description );
+//                printf( "exists: %s\n", type->description );
                 found = true;
                 free( newType );
             }
@@ -196,7 +235,7 @@ int countFile( const char *fpath, const struct stat * sb )
     int result = 0;
     const char * description = NULL;
 
-    printf("\npath: %s\n", fpath );
+    // printf("\npath: %s\n", fpath );
     description = magic_file( global.magic.cookie, fpath );
     if ( description != NULL )
     {
@@ -246,10 +285,12 @@ void displayResults( void )
 {
     printf( "           file count: %lu\n", global.count.files);
     tFileType * type;
+#if 0
     for ( type = global.list.fileTypes; type != NULL; type = type->next )
     {
         printf("%5lu\t%s\n", type->count, type->description );
     }
+#endif
     printf( "        symlink count: %lu\n", global.count.symlinks);
     printf( "      directory count: %lu\n", global.count.directories);
     printf( " unreadable dir count: %lu\n", global.count.directoriesNotReadable);
